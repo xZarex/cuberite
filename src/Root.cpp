@@ -870,50 +870,12 @@ bool cRoot::ForEachPlayer(cPlayerListCallback a_Callback)
 
 bool cRoot::FindAndDoWithPlayer(const AString & a_PlayerName, cPlayerListCallback a_Callback)
 {
-	class cCallback
+	for (auto World : m_WorldsByName)
 	{
-		size_t        m_BestRating;
-		size_t        m_NameLength;
-		const AString m_PlayerName;
-
-	public:
-
-		bool operator () (cPlayer & a_Player)
+		if (World.second->FindAndDoWithPlayer(a_PlayerName, a_Callback))
 		{
-			size_t Rating = RateCompareString (m_PlayerName, a_Player.GetName());
-			if ((Rating > 0) && (Rating >= m_BestRating))
-			{
-				m_BestMatch = a_Player.GetName();
-				if (Rating > m_BestRating)
-				{
-					m_NumMatches = 0;
-				}
-				m_BestRating = Rating;
-				++m_NumMatches;
-			}
-			if (Rating == m_NameLength)  // Perfect match
-			{
-				return true;
-			}
-			return false;
+			return true;
 		}
-
-		cCallback (const AString & a_CBPlayerName) :
-			m_BestRating(0),
-			m_NameLength(a_CBPlayerName.length()),
-			m_PlayerName(a_CBPlayerName),
-			m_BestMatch(),
-			m_NumMatches(0)
-		{}
-
-		AString m_BestMatch;
-		unsigned  m_NumMatches;
-	} Callback (a_PlayerName);
-	ForEachPlayer(Callback);
-
-	if (Callback.m_NumMatches == 1)
-	{
-		return DoWithPlayer(Callback.m_BestMatch, a_Callback);
 	}
 	return false;
 }
@@ -924,9 +886,9 @@ bool cRoot::FindAndDoWithPlayer(const AString & a_PlayerName, cPlayerListCallbac
 
 bool cRoot::DoWithPlayerByUUID(const cUUID & a_PlayerUUID, cPlayerListCallback a_Callback)
 {
-	for (WorldMap::iterator itr = m_WorldsByName.begin(); itr !=  m_WorldsByName.end(); ++itr)
+	for (auto World : m_WorldsByName)
 	{
-		if (itr->second->DoWithPlayerByUUID(a_PlayerUUID, a_Callback))
+		if (World.second->DoWithPlayerByUUID(a_PlayerUUID, a_Callback))
 		{
 			return true;
 		}

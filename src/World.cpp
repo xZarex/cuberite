@@ -90,7 +90,7 @@ namespace World
 // cWorld::cLock:
 
 cWorld::cLock::cLock(cWorld & a_World) :
-	Super(&(a_World.m_ChunkMap->GetCS()))
+	super(&(a_World.m_ChunkMap->GetCS()))
 {
 }
 
@@ -102,7 +102,7 @@ cWorld::cLock::cLock(cWorld & a_World) :
 // cWorld::cTickThread:
 
 cWorld::cTickThread::cTickThread(cWorld & a_World) :
-	Super(Printf("WorldTickThread: %s", a_World.GetName().c_str())),
+	super(Printf("WorldTickThread: %s", a_World.GetName().c_str())),
 	m_World(a_World)
 {
 }
@@ -590,9 +590,9 @@ bool cWorld::IsWeatherWetAtXYZ(Vector3i a_Pos)
 
 
 
-void cWorld::SetNextBlockToTick(const Vector3i a_BlockPos)
+void cWorld::SetNextBlockTick(int a_BlockX, int a_BlockY, int a_BlockZ)
 {
-	return m_ChunkMap->SetNextBlockToTick(a_BlockPos);
+	return m_ChunkMap->SetNextBlockTick(a_BlockX, a_BlockY, a_BlockZ);
 }
 
 
@@ -2623,8 +2623,7 @@ bool cWorld::DoWithPlayer(const AString & a_PlayerName, cPlayerListCallback a_Ca
 	{
 		if (Player->IsTicking() && (NoCaseCompare(Player->GetName(), a_PlayerName) == 0))
 		{
-			a_Callback(*Player);
-			return true;
+			return a_Callback(*Player);
 		}
 	}  // for itr - m_Players[]
 	return false;
@@ -2641,27 +2640,28 @@ bool cWorld::FindAndDoWithPlayer(const AString & a_PlayerNameHint, cPlayerListCa
 	size_t NameLength = a_PlayerNameHint.length();
 
 	cLock Lock(*this);
-	for (cPlayerList::iterator itr = m_Players.begin(); itr != m_Players.end(); ++itr)
+	for (auto & Player : m_Players)
 	{
-		if (!(*itr)->IsTicking())
+		if (!Player->IsTicking())
 		{
 			continue;
 		}
-		size_t Rating = RateCompareString (a_PlayerNameHint, (*itr)->GetName());
-		if (Rating >= BestRating)
+		size_t Rating = RateCompareString (a_PlayerNameHint, Player->GetName());
+		if ((Rating > 0) && (Rating >= BestRating))
 		{
-			BestMatch = *itr;
+			BestMatch = Player;
 			BestRating = Rating;
 		}
 		if (Rating == NameLength)  // Perfect match
 		{
 			break;
 		}
-	}  // for itr - m_Players[]
+	}
 
 	if (BestMatch != nullptr)
 	{
-		return a_Callback(*BestMatch);
+		a_Callback(*BestMatch);
+		return true;
 	}
 	return false;
 }
@@ -2678,6 +2678,7 @@ bool cWorld::DoWithPlayerByUUID(const cUUID & a_PlayerUUID, cPlayerListCallback 
 		if (Player->IsTicking() && (Player->GetUUID() == a_PlayerUUID))
 		{
 			return a_Callback(*Player);
+			//return true;
 		}
 	}
 	return false;
@@ -2730,6 +2731,7 @@ bool cWorld::DoWithNearestPlayer(Vector3d a_Pos, double a_RangeLimit, cPlayerLis
 	if (ClosestPlayer)
 	{
 		return a_Callback(*ClosestPlayer);
+		//return true;
 	}
 	else
 	{
@@ -3195,7 +3197,7 @@ void cWorld::TickQueuedBlocks(void)
 		if (Block->TicksToWait <= 0)
 		{
 			// TODO: Handle the case when the chunk is already unloaded
-			m_ChunkMap->TickBlock({Block->X, Block->Y, Block->Z});
+			m_ChunkMap->TickBlock(Block->X, Block->Y, Block->Z);
 			delete Block;  // We don't have to remove it from the vector, this will happen automatically on the next tick
 		}
 		else
