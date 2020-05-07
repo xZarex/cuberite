@@ -26,7 +26,7 @@ jobs:
     docker: *cube_docker
     steps:
     - attach_workspace: { at: ~/ }
-    - run: ./clang-tidy.sh -j 2
+    - run: ci/circleci/clang-tidy.sh -j 2
 
 workflows:
   version: 2

@@ -70,7 +70,7 @@ matrix:
 
 before_script:
   - export PATH=$(echo "$PATH" | sed -e 's/:\/usr\/lib\/ccache//')
-script: ./travisbuild.sh
+script: ci/travis/build.sh
 cache: ccache
 
 
