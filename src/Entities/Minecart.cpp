@@ -203,11 +203,11 @@ void cMinecart::HandlePhysics(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 	{
 		if (InsideType == E_BLOCK_RAIL)
 		{
-			SnapToRail(InsideMeta, a_Dt);
+			SnapToRail(InsideMeta);
 		}
 		else
 		{
-			SnapToRail(InsideMeta & 0x07, a_Dt);
+			SnapToRail(InsideMeta & 0x07);
 		}
 
 		bool SkipPositionUpdate = false;
@@ -452,7 +452,6 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 		case E_META_RAIL_CURVED_ZM_XM:  // Ends pointing NORTH and WEST
 		{
 			SetYaw(315);  // Set correct rotation server side
-			//SetPosY(floor(GetPosY()) + 0.55);  // Levitate dat cart
 			SetSpeedY(0);
 
 			auto BlckCol = TestBlockCollision(a_RailMeta);
@@ -464,7 +463,6 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 
 			if (GetSpeedX() > NO_SPEED)
 			{
-				LOGD("E_META_RAIL_CURVED_ZM_XM - GetSpeedX");
 				// After passing MaxDistanceZ the next rail will get the physics call
 				double MaxDistanceZ = floor(GetPosZ());
 				// After passing MaxDistanceX the cart could derail (or at least not be centered on the next rail)
@@ -473,26 +471,24 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewZ = GetPosZ() - (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistance : %lf", MaxDistanceZ);
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("NewZ : %lf", NewZ);
-
+				
 				if (NewZ < MaxDistanceZ)
+				{
 					NewZ = MaxDistanceZ;
-
+				}
+					
 				if (GetPosX() > MaxDistanceX)
+				{
 					SetPosX(MaxDistanceX);
+				}
 
-				LOGD("NewZ : %lf", NewZ);
 				SetPosZ(NewZ);
 
 				if (NewZ == MaxDistanceZ)
 				{
-					//make sure its centered on the next rail
+					// Make sure its centered on the next rail
 					SetPosX(MaxDistanceX);
-					//Set the speed for to the new axis
+					// Set the speed for to the new axis
 					SetSpeedZ(-1.0 * GetSpeedX() * 0.7);
 					SetSpeedX(NO_SPEED);
 					// Make sure it gets pushed onto the next rail
@@ -501,25 +497,22 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 			}
 			else if (GetSpeedZ() > NO_SPEED)
 			{
-				LOGD("E_META_RAIL_CURVED_ZM_XM - GetSpeedZ");
-				
 				double MaxDistanceX = floor(GetPosX());
 				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
 
 				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewX = GetPosX() - (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("MaxDistance : %lf", MaxDistanceX);
-				LOGD("NewX : %lf", NewX);
 
 				if (NewX < MaxDistanceX)
+				{
 					NewX = MaxDistanceX;
+				}
 
 				if (GetPosZ() > MaxDistanceZ)
+				{
 					SetPosZ(MaxDistanceZ);
-
-				LOGD("NewX : %lf", NewX);
+				}
 
 				SetPosX(NewX);
 
@@ -538,7 +531,6 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 		case E_META_RAIL_CURVED_ZM_XP:  // Curved NORTH EAST
 		{
 			SetYaw(225);
-			//SetPosY(floor(GetPosY()) + 0.55);
 			SetSpeedY(0);
 
 			auto BlckCol = TestBlockCollision(a_RailMeta);
@@ -548,33 +540,25 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 				return;
 			}
 
-			//AddPosition(GetSpeed() * (static_cast<double>(a_Dt.count()) / 1000));
-
 			if (GetSpeedX() < NO_SPEED)
 			{
-				LOGD("E_META_RAIL_CURVED_ZM_XP - GetSpeedX");
-				
-				// After passing MaxDistanceZ the next rail will get the physics call
 				double MaxDistanceZ = floor(GetPosZ());
-				// After passing MaxDistanceX the cart would derail
 				double MaxDistanceX = floor(GetPosX()) + 0.5;
 
 				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewZ = GetPosZ() - (-1.0* GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistance : %lf", MaxDistanceZ);
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("NewZ : %lf", NewZ);
 
 				if (NewZ < MaxDistanceZ)
+				{
 					NewZ = MaxDistanceZ;
+				}
 
 				if (GetPosX() < MaxDistanceX)
+				{
 					SetPosX(MaxDistanceX);
-
-				LOGD("NewZ : %lf", NewZ);
+				}
+				
 				SetPosZ(NewZ);
 
 				if (NewZ == MaxDistanceZ)
@@ -587,28 +571,23 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 			}
 			else if (GetSpeedZ() > NO_SPEED)
 			{
-				LOGD("E_META_RAIL_CURVED_ZM_XP - GetSpeedZ");
-				
 				double MaxDistanceX = floor(GetPosX()) + 1.0;
 				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
 
 				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewX = GetPosX() + (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("MaxDistanceZ : %lf", MaxDistanceZ);
-				LOGD("NewX : %lf", NewX);
-
+				
 				if (NewX > MaxDistanceX)
+				{
 					NewX = MaxDistanceX;
+				}
 
 				if (GetPosZ() > MaxDistanceZ)
+				{
 					SetPosZ(MaxDistanceZ);
-
-				LOGD("NewX : %lf", NewX);
-
+				}
+				
 				SetPosX(NewX);
 
 
@@ -626,7 +605,6 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 		case E_META_RAIL_CURVED_ZP_XM:  // Curved SOUTH WEST
 		{
 			SetYaw(135);
-			//SetPosY(floor(GetPosY()) + 0.55);
 			SetSpeedY(0);
 
 			auto BlckCol = TestBlockCollision(a_RailMeta);
@@ -636,33 +614,25 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 				return;
 			}
 
-			//AddPosition(GetSpeed() * (static_cast<double>(a_Dt.count()) / 1000));
-
 			if (GetSpeedX() > NO_SPEED)
 			{
-				
-				LOGD("E_META_RAIL_CURVED_ZP_XM - GetSpeedX");
-				// After passing MaxDistanceZ the next rail will get the physics call
 				double MaxDistanceZ = floor(GetPosZ()) + 1.0;
-				// After passing MaxDistanceX the cart would derail
 				double MaxDistanceX = floor(GetPosX()) + 0.5;
 
 				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewZ = GetPosZ() + (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistance : %lf", MaxDistanceZ);
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("NewZ : %lf", NewZ);
-
+				
 				if (NewZ > MaxDistanceZ)
+				{
 					NewZ = MaxDistanceZ;
+				}
 
 				if (GetPosX() > MaxDistanceX)
+				{
 					SetPosX(MaxDistanceX);
-
-				LOGD("NewZ : %lf", NewZ);
+				}
+				
 				SetPosZ(NewZ);
 
 				if (NewZ == MaxDistanceZ)
@@ -675,34 +645,23 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 			}
 			else if (GetSpeedZ() < NO_SPEED)
 			{
-				LOGD("E_META_RAIL_CURVED_ZP_XM - GetSpeedZ");
-				
 				double MaxDistanceX = floor(GetPosX());
 				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
 
-				//AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
+				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewX = GetPosX() + (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("Test : %lf", GetPosX() - (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000)));
-				LOGD("Test2 : %lf", GetPosX() + (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000)));
-				LOGD("Test3 : %lf", GetPosX());
-				LOGD("GetSpeedZ() : %lf", GetSpeedZ());
-
-
-
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("MaxDistanceZ : %lf", MaxDistanceZ);
-				LOGD("NewX : %lf", NewX);
 
 				if (NewX < MaxDistanceX)
+				{
 					NewX = MaxDistanceX;
+				}
 
 				if (GetPosZ() < MaxDistanceZ)
+				{
 					SetPosZ(MaxDistanceZ);
+				}
 
-				LOGD("NewX : %lf", NewX);
 				SetPosX(NewX);
 
 				if (NewX == MaxDistanceX)
@@ -719,7 +678,6 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 		case E_META_RAIL_CURVED_ZP_XP:  // Curved SOUTH EAST
 		{
 			SetYaw(45);
-			//SetPosY(floor(GetPosY()) + 0.55);
 			SetSpeedY(0);
 
 			auto BlckCol = TestBlockCollision(a_RailMeta);
@@ -729,33 +687,25 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 				return;
 			}
 
-			//AddPosition(GetSpeed() * (static_cast<double>(a_Dt.count()) / 1000));
-
 			if (GetSpeedX() < NO_SPEED)
 			{
-				LOGD("E_META_RAIL_CURVED_ZP_XP - GetSpeedX");
-				
-				// After passing MaxDistanceZ the next rail will get the physics call
 				double MaxDistanceZ = floor(GetPosZ()) + 1.0;
-				// After passing MaxDistanceX the cart would derail
 				double MaxDistanceX = floor(GetPosX()) + 0.5;
 
 				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewZ = GetPosZ() - (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistance : %lf", MaxDistanceZ);
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("NewZ : %lf", NewZ);
 
 				if (NewZ > MaxDistanceZ)
+				{
 					NewZ = MaxDistanceZ;
+				}
 
 				if (GetPosX() < MaxDistanceX)
+				{
 					SetPosX(MaxDistanceX);
-
-				LOGD("NewZ : %lf", NewZ);
+				}
+				
 				SetPosZ(NewZ);
 
 				if (NewZ == MaxDistanceZ)
@@ -768,27 +718,23 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 			}
 			else if (GetSpeedZ() < NO_SPEED)
 			{
-				LOGD("E_META_RAIL_CURVED_ZP_XP - GetSpeedZ");
-				
 				double MaxDistanceX = floor(GetPosX()) + 1.0;
 				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
 
 				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewX = GetPosX() - (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("MaxDistanceZ : %lf", MaxDistanceZ);
-				LOGD("NewX : %lf", NewX);
-
+				
 				if (NewX > MaxDistanceX)
+				{
 					NewX = MaxDistanceX;
+				}
 
 				if (GetPosZ() < MaxDistanceZ)
+				{
 					SetPosZ(MaxDistanceZ);
-
-				LOGD("NewX : %lf", NewX);
+				}
+				
 				SetPosX(NewX);
 
 				if (NewX == MaxDistanceX)
@@ -997,7 +943,7 @@ void cMinecart::HandleActivatorRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::m
 
 
 
-void cMinecart::SnapToRail(NIBBLETYPE a_RailMeta, std::chrono::milliseconds a_Dt)
+void cMinecart::SnapToRail(NIBBLETYPE a_RailMeta)
 {
 	switch (a_RailMeta)
 	{
