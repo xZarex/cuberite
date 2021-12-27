@@ -1137,12 +1137,12 @@ bool cMinecart::TestBlockCollision(NIBBLETYPE a_RailMeta)
 		{
 			StopOffset = Vector3d(0.5, 0, 0.5);
 
-			if (SpeedZ != 0)
+			if (SpeedZ < NO_SPEED)
 			{
 				StopTheCart = IsBlockCollisionAtOffset({0, 0, 1});
 				break;
 			}
-			if (SpeedX != 0)
+			if (SpeedX < NO_SPEED)
 			{
 				StopTheCart = IsBlockCollisionAtOffset({1, 0, 0});
 				break;
@@ -1154,12 +1154,12 @@ bool cMinecart::TestBlockCollision(NIBBLETYPE a_RailMeta)
 		{
 			StopOffset = Vector3d(0.5, 0, 0.5);
 
-			if (SpeedZ != 0)
+			if (SpeedZ < NO_SPEED)
 			{
 				StopTheCart = IsBlockCollisionAtOffset({0, 0, 1});
 				break;
 			}
-			if (SpeedX != 0)
+			if (SpeedX > NO_SPEED)
 			{
 				StopTheCart = IsBlockCollisionAtOffset({-1, 0, 0});
 				break;
@@ -1171,12 +1171,12 @@ bool cMinecart::TestBlockCollision(NIBBLETYPE a_RailMeta)
 		{
 			StopOffset = Vector3d(0.5, 0, 0.5);
 
-			if (SpeedZ != 0)
+			if (SpeedZ > NO_SPEED)
 			{
 				StopTheCart = IsBlockCollisionAtOffset({0, 0, -1});
 				break;
 			}
-			if (SpeedX != 0)
+			if (SpeedX > NO_SPEED)
 			{
 				StopTheCart = IsBlockCollisionAtOffset({-1, 0, 0});
 				break;
@@ -1188,12 +1188,12 @@ bool cMinecart::TestBlockCollision(NIBBLETYPE a_RailMeta)
 		{
 			StopOffset = Vector3d(0.5, 0, 0.5);
 
-			if (SpeedZ != 0)
+			if (SpeedZ > NO_SPEED)
 			{
 				StopTheCart = IsBlockCollisionAtOffset({0, 0, -1});
 				break;
 			}
-			if (SpeedX != 0)
+			if (SpeedX < NO_SPEED)
 			{
 				StopTheCart = IsBlockCollisionAtOffset({1, 0, 0});
 				break;
