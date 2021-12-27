@@ -77,7 +77,7 @@ protected:
 
 	/** Snaps a mincecart to a rail's axis, resetting its speed
 		For curved rails, it changes the cart's direction as well as snapping it to axis */
-	void SnapToRail(NIBBLETYPE a_RailMeta);
+	void SnapToRail(NIBBLETYPE a_RailMeta, std::chrono::milliseconds a_Dt);
 	/** Tests if a solid block is in front of a cart, and stops the cart (and returns true) if so; returns false if no obstruction */
 	bool TestBlockCollision(NIBBLETYPE a_RailMeta);
 	/** Tests if there is a block at the specified position which is impassable to minecarts */
