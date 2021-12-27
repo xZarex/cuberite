@@ -210,10 +210,27 @@ void cMinecart::HandlePhysics(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 			SnapToRail(InsideMeta & 0x07, a_Dt);
 		}
 
-
+		bool SkipPositionUpdate = false;
 		switch (InsideType)
 		{
-			case E_BLOCK_RAIL: HandleRailPhysics(InsideMeta, a_Dt); break;
+			case E_BLOCK_RAIL:
+			{
+				HandleRailPhysics(InsideMeta, a_Dt);
+				switch (InsideMeta)
+				{
+					case E_META_RAIL_CURVED_ZM_XM:
+					case E_META_RAIL_CURVED_ZM_XP:
+					case E_META_RAIL_CURVED_ZP_XM:
+					case E_META_RAIL_CURVED_ZP_XP:
+					{
+						SkipPositionUpdate = true;
+						break;
+					}
+					default:
+						break;
+				}
+				break;
+			}
 			case E_BLOCK_ACTIVATOR_RAIL: break;
 			case E_BLOCK_POWERED_RAIL: HandlePoweredRailPhysics(InsideMeta); break;
 			case E_BLOCK_DETECTOR_RAIL:
@@ -224,9 +241,12 @@ void cMinecart::HandlePhysics(std::chrono::milliseconds a_Dt, cChunk & a_Chunk)
 			}
 			default: VERIFY(!"Unhandled rail type despite checking if block was rail!"); break;
 		}
-		
 
-		AddPosition(GetSpeed() * (static_cast<double>(a_Dt.count()) / 1000));  // Commit changes; as we use our own engine when on rails, this needs to be done, whereas it is normally in Entity.cpp
+		// Shouldn't be called if the rail is a curve, the curve handles the position changes
+		if (!SkipPositionUpdate)
+		{
+			AddPosition(GetSpeed() * (static_cast<double>(a_Dt.count()) / 1000));  // Commit changes; as we use our own engine when on rails, this needs to be done, whereas it is normally in Entity.cpp
+		}
 	}
 	else
 	{
@@ -432,7 +452,7 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 		case E_META_RAIL_CURVED_ZM_XM:  // Ends pointing NORTH and WEST
 		{
 			SetYaw(315);  // Set correct rotation server side
-			SetPosY(floor(GetPosY()) + 0.55);  // Levitate dat cart
+			//SetPosY(floor(GetPosY()) + 0.55);  // Levitate dat cart
 			SetSpeedY(0);
 
 			auto BlckCol = TestBlockCollision(a_RailMeta);
@@ -442,14 +462,83 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 				return;
 			}
 
-			// SnapToRail handles turning
+			if (GetSpeedX() > NO_SPEED)
+			{
+				LOGD("E_META_RAIL_CURVED_ZM_XM - GetSpeedX");
+				// After passing MaxDistanceZ the next rail will get the physics call
+				double MaxDistanceZ = floor(GetPosZ());
+				// After passing MaxDistanceX the cart could derail (or at least not be centered on the next rail)
+				double MaxDistanceX = floor(GetPosX()) + 0.5;
+
+				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
+
+				double NewZ = GetPosZ() - (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
+				LOGD("GetPosX : %lf", GetPosX());
+				LOGD("GetPosZ : %lf", GetPosZ());
+				LOGD("MaxDistance : %lf", MaxDistanceZ);
+				LOGD("MaxDistanceX : %lf", MaxDistanceX);
+				LOGD("NewZ : %lf", NewZ);
+
+				if (NewZ < MaxDistanceZ)
+					NewZ = MaxDistanceZ;
+
+				if (GetPosX() > MaxDistanceX)
+					SetPosX(MaxDistanceX);
+
+				LOGD("NewZ : %lf", NewZ);
+				SetPosZ(NewZ);
+
+				if (NewZ == MaxDistanceZ)
+				{
+					//make sure its centered on the next rail
+					SetPosX(MaxDistanceX);
+					//Set the speed for to the new axis
+					SetSpeedZ(-1.0 * GetSpeedX() * 0.7);
+					SetSpeedX(NO_SPEED);
+					// Make sure it gets pushed onto the next rail
+					AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
+				}
+			}
+			else if (GetSpeedZ() > NO_SPEED)
+			{
+				LOGD("E_META_RAIL_CURVED_ZM_XM - GetSpeedZ");
+				
+				double MaxDistanceX = floor(GetPosX());
+				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
+
+				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
+
+				double NewX = GetPosX() - (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
+				LOGD("GetPosX : %lf", GetPosX());
+				LOGD("MaxDistance : %lf", MaxDistanceX);
+				LOGD("NewX : %lf", NewX);
+
+				if (NewX < MaxDistanceX)
+					NewX = MaxDistanceX;
+
+				if (GetPosZ() > MaxDistanceZ)
+					SetPosZ(MaxDistanceZ);
+
+				LOGD("NewX : %lf", NewX);
+
+				SetPosX(NewX);
+
+				if (NewX == MaxDistanceX)
+				{
+					SetPosZ(MaxDistanceZ);
+					SetSpeedX(-1.0 * GetSpeedZ() * 0.7);
+					SetSpeedZ(NO_SPEED);
+					AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
+				}
+
+			}
 
 			return;
 		}
 		case E_META_RAIL_CURVED_ZM_XP:  // Curved NORTH EAST
 		{
 			SetYaw(225);
-			SetPosY(floor(GetPosY()) + 0.55);
+			//SetPosY(floor(GetPosY()) + 0.55);
 			SetSpeedY(0);
 
 			auto BlckCol = TestBlockCollision(a_RailMeta);
@@ -457,6 +546,79 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 			if (EntCol || BlckCol)
 			{
 				return;
+			}
+
+			//AddPosition(GetSpeed() * (static_cast<double>(a_Dt.count()) / 1000));
+
+			if (GetSpeedX() < NO_SPEED)
+			{
+				LOGD("E_META_RAIL_CURVED_ZM_XP - GetSpeedX");
+				
+				// After passing MaxDistanceZ the next rail will get the physics call
+				double MaxDistanceZ = floor(GetPosZ());
+				// After passing MaxDistanceX the cart would derail
+				double MaxDistanceX = floor(GetPosX()) + 0.5;
+
+				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
+
+				double NewZ = GetPosZ() - (-1.0* GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
+				LOGD("GetPosX : %lf", GetPosX());
+				LOGD("GetPosZ : %lf", GetPosZ());
+				LOGD("MaxDistance : %lf", MaxDistanceZ);
+				LOGD("MaxDistanceX : %lf", MaxDistanceX);
+				LOGD("NewZ : %lf", NewZ);
+
+				if (NewZ < MaxDistanceZ)
+					NewZ = MaxDistanceZ;
+
+				if (GetPosX() < MaxDistanceX)
+					SetPosX(MaxDistanceX);
+
+				LOGD("NewZ : %lf", NewZ);
+				SetPosZ(NewZ);
+
+				if (NewZ == MaxDistanceZ)
+				{
+					SetPosX(MaxDistanceX);
+					SetSpeedZ(GetSpeedX() * 0.7);
+					SetSpeedX(NO_SPEED);
+					AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
+				}
+			}
+			else if (GetSpeedZ() > NO_SPEED)
+			{
+				LOGD("E_META_RAIL_CURVED_ZM_XP - GetSpeedZ");
+				
+				double MaxDistanceX = floor(GetPosX()) + 1.0;
+				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
+
+				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
+
+				double NewX = GetPosX() + (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
+				LOGD("GetPosX : %lf", GetPosX());
+				LOGD("GetPosZ : %lf", GetPosZ());
+				LOGD("MaxDistanceX : %lf", MaxDistanceX);
+				LOGD("MaxDistanceZ : %lf", MaxDistanceZ);
+				LOGD("NewX : %lf", NewX);
+
+				if (NewX > MaxDistanceX)
+					NewX = MaxDistanceX;
+
+				if (GetPosZ() > MaxDistanceZ)
+					SetPosZ(MaxDistanceZ);
+
+				LOGD("NewX : %lf", NewX);
+
+				SetPosX(NewX);
+
+
+				if (NewX == MaxDistanceX)
+				{
+					SetPosZ(MaxDistanceZ);
+					SetSpeedX(GetSpeedZ() * 0.7);
+					SetSpeedZ(NO_SPEED);
+					AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
+				}
 			}
 
 			return;
@@ -464,7 +626,7 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 		case E_META_RAIL_CURVED_ZP_XM:  // Curved SOUTH WEST
 		{
 			SetYaw(135);
-			SetPosY(floor(GetPosY()) + 0.55);
+			//SetPosY(floor(GetPosY()) + 0.55);
 			SetSpeedY(0);
 
 			auto BlckCol = TestBlockCollision(a_RailMeta);
@@ -474,12 +636,90 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 				return;
 			}
 
+			//AddPosition(GetSpeed() * (static_cast<double>(a_Dt.count()) / 1000));
+
+			if (GetSpeedX() > NO_SPEED)
+			{
+				
+				LOGD("E_META_RAIL_CURVED_ZP_XM - GetSpeedX");
+				// After passing MaxDistanceZ the next rail will get the physics call
+				double MaxDistanceZ = floor(GetPosZ()) + 1.0;
+				// After passing MaxDistanceX the cart would derail
+				double MaxDistanceX = floor(GetPosX()) + 0.5;
+
+				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
+
+				double NewZ = GetPosZ() + (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
+				LOGD("GetPosX : %lf", GetPosX());
+				LOGD("GetPosZ : %lf", GetPosZ());
+				LOGD("MaxDistance : %lf", MaxDistanceZ);
+				LOGD("MaxDistanceX : %lf", MaxDistanceX);
+				LOGD("NewZ : %lf", NewZ);
+
+				if (NewZ > MaxDistanceZ)
+					NewZ = MaxDistanceZ;
+
+				if (GetPosX() > MaxDistanceX)
+					SetPosX(MaxDistanceX);
+
+				LOGD("NewZ : %lf", NewZ);
+				SetPosZ(NewZ);
+
+				if (NewZ == MaxDistanceZ)
+				{
+					SetPosX(MaxDistanceX);
+					SetSpeedZ(GetSpeedX() * 0.7);
+					SetSpeedX(NO_SPEED);
+					AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
+				}
+			}
+			else if (GetSpeedZ() < NO_SPEED)
+			{
+				LOGD("E_META_RAIL_CURVED_ZP_XM - GetSpeedZ");
+				
+				double MaxDistanceX = floor(GetPosX());
+				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
+
+				//AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
+
+				double NewX = GetPosX() + (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
+				LOGD("Test : %lf", GetPosX() - (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000)));
+				LOGD("Test2 : %lf", GetPosX() + (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000)));
+				LOGD("Test3 : %lf", GetPosX());
+				LOGD("GetSpeedZ() : %lf", GetSpeedZ());
+
+
+
+				LOGD("GetPosX : %lf", GetPosX());
+				LOGD("GetPosZ : %lf", GetPosZ());
+				LOGD("MaxDistanceX : %lf", MaxDistanceX);
+				LOGD("MaxDistanceZ : %lf", MaxDistanceZ);
+				LOGD("NewX : %lf", NewX);
+
+				if (NewX < MaxDistanceX)
+					NewX = MaxDistanceX;
+
+				if (GetPosZ() < MaxDistanceZ)
+					SetPosZ(MaxDistanceZ);
+
+				LOGD("NewX : %lf", NewX);
+				SetPosX(NewX);
+
+				if (NewX == MaxDistanceX)
+				{
+					SetPosZ(MaxDistanceZ);
+					SetSpeedX(GetSpeedZ() * 0.7);
+					SetSpeedZ(NO_SPEED);
+					AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
+				}
+			}
+
 			return;
 		}
 		case E_META_RAIL_CURVED_ZP_XP:  // Curved SOUTH EAST
 		{
 			SetYaw(45);
-			SetPosY(floor(GetPosY()) + 0.55);
+			//SetPosY(floor(GetPosY()) + 0.55);
 			SetSpeedY(0);
 
 			auto BlckCol = TestBlockCollision(a_RailMeta);
@@ -487,6 +727,77 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 			if (EntCol || BlckCol)
 			{
 				return;
+			}
+
+			//AddPosition(GetSpeed() * (static_cast<double>(a_Dt.count()) / 1000));
+
+			if (GetSpeedX() < NO_SPEED)
+			{
+				LOGD("E_META_RAIL_CURVED_ZP_XP - GetSpeedX");
+				
+				// After passing MaxDistanceZ the next rail will get the physics call
+				double MaxDistanceZ = floor(GetPosZ()) + 1.0;
+				// After passing MaxDistanceX the cart would derail
+				double MaxDistanceX = floor(GetPosX()) + 0.5;
+
+				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
+
+				double NewZ = GetPosZ() - (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
+				LOGD("GetPosX : %lf", GetPosX());
+				LOGD("GetPosZ : %lf", GetPosZ());
+				LOGD("MaxDistance : %lf", MaxDistanceZ);
+				LOGD("MaxDistanceX : %lf", MaxDistanceX);
+				LOGD("NewZ : %lf", NewZ);
+
+				if (NewZ > MaxDistanceZ)
+					NewZ = MaxDistanceZ;
+
+				if (GetPosX() < MaxDistanceX)
+					SetPosX(MaxDistanceX);
+
+				LOGD("NewZ : %lf", NewZ);
+				SetPosZ(NewZ);
+
+				if (NewZ == MaxDistanceZ)
+				{
+					SetPosX(MaxDistanceX);
+					SetSpeedZ(-1.0*GetSpeedX() * 0.7);
+					SetSpeedX(NO_SPEED);
+					AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
+				}
+			}
+			else if (GetSpeedZ() < NO_SPEED)
+			{
+				LOGD("E_META_RAIL_CURVED_ZP_XP - GetSpeedZ");
+				
+				double MaxDistanceX = floor(GetPosX()) + 1.0;
+				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
+
+				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
+
+				double NewX = GetPosX() - (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
+				LOGD("GetPosX : %lf", GetPosX());
+				LOGD("GetPosZ : %lf", GetPosZ());
+				LOGD("MaxDistanceX : %lf", MaxDistanceX);
+				LOGD("MaxDistanceZ : %lf", MaxDistanceZ);
+				LOGD("NewX : %lf", NewX);
+
+				if (NewX > MaxDistanceX)
+					NewX = MaxDistanceX;
+
+				if (GetPosZ() < MaxDistanceZ)
+					SetPosZ(MaxDistanceZ);
+
+				LOGD("NewX : %lf", NewX);
+				SetPosX(NewX);
+
+				if (NewX == MaxDistanceX)
+				{
+					SetPosZ(MaxDistanceZ);
+					SetSpeedX(-1.0*GetSpeedZ() * 0.7);
+					SetSpeedZ(NO_SPEED);
+					AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
+				}
 			}
 
 			return;
@@ -708,248 +1019,10 @@ void cMinecart::SnapToRail(NIBBLETYPE a_RailMeta, std::chrono::milliseconds a_Dt
 		}
 		
 		case E_META_RAIL_CURVED_ZM_XM:
-		{
-			if (GetSpeedX() != NO_SPEED)
-			{
-				LOGD("E_META_RAIL_CURVED_ZM_XM - GetSpeedX");
-				// After passing MaxDistanceZ the next rail will get the physics call
-				double MaxDistanceZ = floor(GetPosZ());
-				// After passing MaxDistanceX the cart would derail
-				double MaxDistanceX = floor(GetPosX()) + 0.5;
-				double NewZ = GetPosZ() - (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistance : %lf", MaxDistanceZ);
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("NewZ : %lf", NewZ);
-
-				if (NewZ < MaxDistanceZ)
-					NewZ = MaxDistanceZ;
-
-				if (GetPosX() > MaxDistanceX)
-					SetPosX(MaxDistanceX);
-
-				LOGD("NewZ : %lf", NewZ);
-				SetPosZ(NewZ);
-
-				if (NewZ == MaxDistanceZ)
-				{
-					SetSpeedZ(-1.0 * GetSpeedX() * 0.7);
-					SetSpeedX(NO_SPEED);
-				}
-			}
-			else if (GetSpeedZ() != NO_SPEED)
-			{
-				LOGD("E_META_RAIL_CURVED_ZM_XM - GetSpeedZ");
-				double MaxDistanceX = floor(GetPosX());
-				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
-				double NewX = GetPosX() - (GetSpeedZ()  * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("MaxDistance : %lf", MaxDistanceX);
-				LOGD("NewX : %lf", NewX);
-
-				if (NewX < MaxDistanceX)
-					NewX = MaxDistanceX;
-
-				if (GetPosZ() > MaxDistanceZ)
-					SetPosZ(MaxDistanceZ);
-
-				LOGD("NewX : %lf", NewX);
-
-				SetPosX(NewX);
-
-				if (NewX == MaxDistanceX)
-				{
-					SetSpeedX(-1.0 * GetSpeedZ() * 0.7);
-					SetSpeedZ(NO_SPEED);
-				}
-
-			}
-			SetSpeedY(0);
-			break;
-		}
 		case E_META_RAIL_CURVED_ZM_XP:
-		{
-			if (GetSpeedX() != NO_SPEED)
-			{
-				LOGD("E_META_RAIL_CURVED_ZM_XP - GetSpeedX");
-				// After passing MaxDistanceZ the next rail will get the physics call
-				double MaxDistanceZ = floor(GetPosZ()) + 1.0;
-				// After passing MaxDistanceX the cart would derail
-				double MaxDistanceX = floor(GetPosX()) + 0.5;
-				double NewZ = GetPosZ() - (-1.0* GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistance : %lf", MaxDistanceZ);
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("NewZ : %lf", NewZ);
-
-				if (NewZ > MaxDistanceZ)
-					NewZ = MaxDistanceZ;
-
-				if (GetPosX() < MaxDistanceX)
-					SetPosX(MaxDistanceX);
-
-				LOGD("NewZ : %lf", NewZ);
-				SetPosZ(NewZ);
-
-				if (NewZ == MaxDistanceZ)
-				{
-					SetSpeedZ(GetSpeedX() * 0.7);
-					SetSpeedX(NO_SPEED);
-				}
-			}
-			else if (GetSpeedZ() != NO_SPEED)
-			{
-				LOGD("E_META_RAIL_CURVED_ZM_XP - GetSpeedZ");
-				double MaxDistanceX = floor(GetPosX());
-				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
-				double NewX = GetPosX() - (GetSpeedZ()  * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("MaxDistanceZ : %lf", MaxDistanceZ);
-				LOGD("NewX : %lf", NewX);
-
-				if (NewX < MaxDistanceX)
-					NewX = MaxDistanceX;
-
-				if (GetPosZ() > MaxDistanceZ)
-					SetPosZ(MaxDistanceZ);
-
-				LOGD("NewX : %lf", NewX);
-
-				SetPosX(NewX);
-
-
-				if (NewX == MaxDistanceX)
-				{
-					SetSpeedX(GetSpeedZ() * 0.7);
-					SetSpeedZ(NO_SPEED);
-				}
-			}
-			SetSpeedY(0);
-			break;
-		}
 		case E_META_RAIL_CURVED_ZP_XM:
-		{
-			if (GetSpeedX() != NO_SPEED)
-			{
-				LOGD("E_META_RAIL_CURVED_ZP_XM - GetSpeedX");
-				// After passing MaxDistanceZ the next rail will get the physics call
-				double MaxDistanceZ = floor(GetPosZ()) + 1.0;
-				// After passing MaxDistanceX the cart would derail
-				double MaxDistanceX = floor(GetPosX()) + 0.5;
-				double NewZ = GetPosZ() + (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistance : %lf", MaxDistanceZ);
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("NewZ : %lf", NewZ);
-
-				if (NewZ > MaxDistanceZ)
-					NewZ = MaxDistanceZ;
-
-				if (GetPosX() > MaxDistanceX)
-					SetPosX(MaxDistanceX);
-
-				LOGD("NewZ : %lf", NewZ);
-				SetPosZ(NewZ);
-
-				if (NewZ == MaxDistanceZ)
-				{
-					SetSpeedZ(GetSpeedX() * 0.7);
-					SetSpeedX(NO_SPEED);
-				}
-			}
-			else if (GetSpeedZ() != NO_SPEED)
-			{
-				LOGD("E_META_RAIL_CURVED_ZP_XM - GetSpeedZ");
-				double MaxDistanceX = floor(GetPosX());
-				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
-				double NewX = GetPosX() - (GetSpeedZ()  * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("MaxDistanceZ : %lf", MaxDistanceZ);
-				LOGD("NewX : %lf", NewX);
-
-				if (NewX > MaxDistanceX)
-					NewX = MaxDistanceX;
-
-				if (GetPosZ() < MaxDistanceZ)
-					SetPosZ(MaxDistanceZ);
-
-				LOGD("NewX : %lf", NewX);
-
-				if (NewX == MaxDistanceX)
-				{
-					SetSpeedX(GetSpeedZ() * 0.7);
-					SetSpeedZ(NO_SPEED);
-				}
-			}
-
-			SetSpeedY(0);
-			break;
-		}
 		case E_META_RAIL_CURVED_ZP_XP:
 		{
-			if (GetSpeedX() != NO_SPEED)
-			{
-				LOGD("E_META_RAIL_CURVED_ZP_XP - GetSpeedX");
-				// After passing MaxDistanceZ the next rail will get the physics call
-				double MaxDistanceZ = floor(GetPosZ()) + 1.0;
-				// After passing MaxDistanceX the cart would derail
-				double MaxDistanceX = floor(GetPosX()) + 0.5;
-				double NewZ = GetPosZ() - (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistance : %lf", MaxDistanceZ);
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("NewZ : %lf", NewZ);
-
-				if (NewZ > MaxDistanceZ)
-					NewZ = MaxDistanceZ;
-
-				if (GetPosX() < MaxDistanceX)
-					SetPosX(MaxDistanceX);
-
-				LOGD("NewZ : %lf", NewZ);
-				SetPosZ(NewZ);
-
-				if (NewZ == MaxDistanceZ)
-				{
-					SetSpeedZ(-1.0*GetSpeedX() * 0.7);
-					SetSpeedX(NO_SPEED);
-				}
-			}
-			else if (GetSpeedZ() != NO_SPEED)
-			{
-				LOGD("E_META_RAIL_CURVED_ZP_XP - GetSpeedZ");
-				double MaxDistanceX = floor(GetPosX()) + 1.0;
-				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
-				double NewX = GetPosX() - (GetSpeedZ()  * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
-				LOGD("GetPosX : %lf", GetPosX());
-				LOGD("GetPosZ : %lf", GetPosZ());
-				LOGD("MaxDistanceX : %lf", MaxDistanceX);
-				LOGD("MaxDistanceZ : %lf", MaxDistanceZ);
-				LOGD("NewX : %lf", NewX);
-
-				if (NewX < MaxDistanceX)
-					NewX = MaxDistanceX;
-
-				if (GetPosZ() > MaxDistanceZ)
-					SetPosZ(MaxDistanceZ);
-
-				LOGD("NewX : %lf", NewX);
-
-				if (NewX == MaxDistanceX)
-				{
-					SetSpeedX(-1.0*GetSpeedZ() * 0.7);
-					SetSpeedZ(NO_SPEED);
-				}
-			}
-			SetSpeedY(0);
 			break;
 		}
 		default: break;
