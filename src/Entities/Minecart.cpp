@@ -488,7 +488,7 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 				{
 					// Make sure its centered on the next rail
 					SetPosX(MaxDistanceX);
-					// Set the speed for to the new axis
+					// Set the speed for the new axis
 					SetSpeedZ(-1.0 * GetSpeedX() * 0.7);
 					SetSpeedX(NO_SPEED);
 					// Make sure it gets pushed onto the next rail
@@ -1206,7 +1206,6 @@ bool cMinecart::TestBlockCollision(NIBBLETYPE a_RailMeta)
 	if (StopTheCart)
 	{
 		SetSpeed(0, 0, 0);
-		LOGD("StopTheCart");
 
 		#ifdef __clang__
 			#pragma clang diagnostic push
