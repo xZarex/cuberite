@@ -547,7 +547,7 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 
 				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
 
-				double NewZ = GetPosZ() - (-1.0* GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
+				double NewZ = GetPosZ() - (-1.0 * GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
 
 				if (NewZ < MaxDistanceZ)
 				{
@@ -711,7 +711,7 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 				if (NewZ == MaxDistanceZ)
 				{
 					SetPosX(MaxDistanceX);
-					SetSpeedZ(-1.0*GetSpeedX() * 0.7);
+					SetSpeedZ(-1.0 * GetSpeedX() * 0.7);
 					SetSpeedX(NO_SPEED);
 					AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
 				}
@@ -740,7 +740,7 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 				if (NewX == MaxDistanceX)
 				{
 					SetPosZ(MaxDistanceZ);
-					SetSpeedX(-1.0*GetSpeedZ() * 0.7);
+					SetSpeedX(-1.0 * GetSpeedZ() * 0.7);
 					SetSpeedZ(NO_SPEED);
 					AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
 				}
