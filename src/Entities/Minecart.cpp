@@ -463,31 +463,31 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 
 			if (GetSpeedX() > NO_SPEED)
 			{
-				// After passing MaxDistanceZ the next rail will get the physics call
-				double MaxDistanceZ = floor(GetPosZ());
-				// After passing MaxDistanceX the cart could derail (or at least not be centered on the next rail)
-				double MaxDistanceX = floor(GetPosX()) + 0.5;
+				// After passing MaxZ the next rail will get the physics call
+				double MaxZ = floor(GetPosZ());
+				// After passing MaxX the cart could derail (or at least not be centered on the next rail)
+				double MaxX = floor(GetPosX()) + 0.5;
 
 				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewZ = GetPosZ() - (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
 				
-				if (NewZ < MaxDistanceZ)
+				if (NewZ < MaxZ)
 				{
-					NewZ = MaxDistanceZ;
+					NewZ = MaxZ;
 				}
 					
-				if (GetPosX() > MaxDistanceX)
+				if (GetPosX() > MaxX)
 				{
-					SetPosX(MaxDistanceX);
+					SetPosX(MaxX);
 				}
 
 				SetPosZ(NewZ);
 
-				if (NewZ == MaxDistanceZ)
+				if (NewZ == MaxZ)
 				{
 					// Make sure its centered on the next rail
-					SetPosX(MaxDistanceX);
+					SetPosX(MaxX);
 					// Set the speed for the new axis
 					SetSpeedZ(-1.0 * GetSpeedX() * 0.7);
 					SetSpeedX(NO_SPEED);
@@ -497,28 +497,28 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 			}
 			else if (GetSpeedZ() > NO_SPEED)
 			{
-				double MaxDistanceX = floor(GetPosX());
-				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
+				double MaxX = floor(GetPosX());
+				double MaxZ = floor(GetPosZ()) + 0.5;
 
 				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewX = GetPosX() - (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
 
-				if (NewX < MaxDistanceX)
+				if (NewX < MaxX)
 				{
-					NewX = MaxDistanceX;
+					NewX = MaxX;
 				}
 
-				if (GetPosZ() > MaxDistanceZ)
+				if (GetPosZ() > MaxZ)
 				{
-					SetPosZ(MaxDistanceZ);
+					SetPosZ(MaxZ);
 				}
 
 				SetPosX(NewX);
 
-				if (NewX == MaxDistanceX)
+				if (NewX == MaxX)
 				{
-					SetPosZ(MaxDistanceZ);
+					SetPosZ(MaxZ);
 					SetSpeedX(-1.0 * GetSpeedZ() * 0.7);
 					SetSpeedZ(NO_SPEED);
 					AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
@@ -542,28 +542,28 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 
 			if (GetSpeedX() < NO_SPEED)
 			{
-				double MaxDistanceZ = floor(GetPosZ());
-				double MaxDistanceX = floor(GetPosX()) + 0.5;
+				double MaxZ = floor(GetPosZ());
+				double MaxX = floor(GetPosX()) + 0.5;
 
 				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewZ = GetPosZ() - (-1.0 * GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
 
-				if (NewZ < MaxDistanceZ)
+				if (NewZ < MaxZ)
 				{
-					NewZ = MaxDistanceZ;
+					NewZ = MaxZ;
 				}
 
-				if (GetPosX() < MaxDistanceX)
+				if (GetPosX() < MaxX)
 				{
-					SetPosX(MaxDistanceX);
+					SetPosX(MaxX);
 				}
 				
 				SetPosZ(NewZ);
 
-				if (NewZ == MaxDistanceZ)
+				if (NewZ == MaxZ)
 				{
-					SetPosX(MaxDistanceX);
+					SetPosX(MaxX);
 					SetSpeedZ(GetSpeedX() * 0.7);
 					SetSpeedX(NO_SPEED);
 					AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
@@ -571,29 +571,29 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 			}
 			else if (GetSpeedZ() > NO_SPEED)
 			{
-				double MaxDistanceX = floor(GetPosX()) + 1.0;
-				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
+				double MaxX = floor(GetPosX()) + 1.0;
+				double MaxZ = floor(GetPosZ()) + 0.5;
 
 				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewX = GetPosX() + (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
 				
-				if (NewX > MaxDistanceX)
+				if (NewX > MaxX)
 				{
-					NewX = MaxDistanceX;
+					NewX = MaxX;
 				}
 
-				if (GetPosZ() > MaxDistanceZ)
+				if (GetPosZ() > MaxZ)
 				{
-					SetPosZ(MaxDistanceZ);
+					SetPosZ(MaxZ);
 				}
 				
 				SetPosX(NewX);
 
 
-				if (NewX == MaxDistanceX)
+				if (NewX == MaxX)
 				{
-					SetPosZ(MaxDistanceZ);
+					SetPosZ(MaxZ);
 					SetSpeedX(GetSpeedZ() * 0.7);
 					SetSpeedZ(NO_SPEED);
 					AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
@@ -616,28 +616,28 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 
 			if (GetSpeedX() > NO_SPEED)
 			{
-				double MaxDistanceZ = floor(GetPosZ()) + 1.0;
-				double MaxDistanceX = floor(GetPosX()) + 0.5;
+				double MaxZ = floor(GetPosZ()) + 1.0;
+				double MaxX = floor(GetPosX()) + 0.5;
 
 				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewZ = GetPosZ() + (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
 				
-				if (NewZ > MaxDistanceZ)
+				if (NewZ > MaxZ)
 				{
-					NewZ = MaxDistanceZ;
+					NewZ = MaxZ;
 				}
 
-				if (GetPosX() > MaxDistanceX)
+				if (GetPosX() > MaxX)
 				{
-					SetPosX(MaxDistanceX);
+					SetPosX(MaxX);
 				}
 				
 				SetPosZ(NewZ);
 
-				if (NewZ == MaxDistanceZ)
+				if (NewZ == MaxZ)
 				{
-					SetPosX(MaxDistanceX);
+					SetPosX(MaxX);
 					SetSpeedZ(GetSpeedX() * 0.7);
 					SetSpeedX(NO_SPEED);
 					AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
@@ -645,28 +645,28 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 			}
 			else if (GetSpeedZ() < NO_SPEED)
 			{
-				double MaxDistanceX = floor(GetPosX());
-				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
+				double MaxX = floor(GetPosX());
+				double MaxZ = floor(GetPosZ()) + 0.5;
 
 				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewX = GetPosX() + (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
 
-				if (NewX < MaxDistanceX)
+				if (NewX < MaxX)
 				{
-					NewX = MaxDistanceX;
+					NewX = MaxX;
 				}
 
-				if (GetPosZ() < MaxDistanceZ)
+				if (GetPosZ() < MaxZ)
 				{
-					SetPosZ(MaxDistanceZ);
+					SetPosZ(MaxZ);
 				}
 
 				SetPosX(NewX);
 
-				if (NewX == MaxDistanceX)
+				if (NewX == MaxX)
 				{
-					SetPosZ(MaxDistanceZ);
+					SetPosZ(MaxZ);
 					SetSpeedX(GetSpeedZ() * 0.7);
 					SetSpeedZ(NO_SPEED);
 					AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
@@ -689,28 +689,28 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 
 			if (GetSpeedX() < NO_SPEED)
 			{
-				double MaxDistanceZ = floor(GetPosZ()) + 1.0;
-				double MaxDistanceX = floor(GetPosX()) + 0.5;
+				double MaxZ = floor(GetPosZ()) + 1.0;
+				double MaxX = floor(GetPosX()) + 0.5;
 
 				AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewZ = GetPosZ() - (GetSpeedX() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
 
-				if (NewZ > MaxDistanceZ)
+				if (NewZ > MaxZ)
 				{
-					NewZ = MaxDistanceZ;
+					NewZ = MaxZ;
 				}
 
-				if (GetPosX() < MaxDistanceX)
+				if (GetPosX() < MaxX)
 				{
-					SetPosX(MaxDistanceX);
+					SetPosX(MaxX);
 				}
 				
 				SetPosZ(NewZ);
 
-				if (NewZ == MaxDistanceZ)
+				if (NewZ == MaxZ)
 				{
-					SetPosX(MaxDistanceX);
+					SetPosX(MaxX);
 					SetSpeedZ(-1.0 * GetSpeedX() * 0.7);
 					SetSpeedX(NO_SPEED);
 					AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
@@ -718,28 +718,28 @@ void cMinecart::HandleRailPhysics(NIBBLETYPE a_RailMeta, std::chrono::millisecon
 			}
 			else if (GetSpeedZ() < NO_SPEED)
 			{
-				double MaxDistanceX = floor(GetPosX()) + 1.0;
-				double MaxDistanceZ = floor(GetPosZ()) + 0.5;
+				double MaxX = floor(GetPosX()) + 1.0;
+				double MaxZ = floor(GetPosZ()) + 0.5;
 
 				AddPosZ(GetSpeedZ() * (static_cast<double>(a_Dt.count()) / 1000));
 
 				double NewX = GetPosX() - (GetSpeedZ() * 0.5 * (static_cast<double>(a_Dt.count()) / 1000));
 				
-				if (NewX > MaxDistanceX)
+				if (NewX > MaxX)
 				{
-					NewX = MaxDistanceX;
+					NewX = MaxX;
 				}
 
-				if (GetPosZ() < MaxDistanceZ)
+				if (GetPosZ() < MaxZ)
 				{
-					SetPosZ(MaxDistanceZ);
+					SetPosZ(MaxZ);
 				}
 				
 				SetPosX(NewX);
 
-				if (NewX == MaxDistanceX)
+				if (NewX == MaxX)
 				{
-					SetPosZ(MaxDistanceZ);
+					SetPosZ(MaxZ);
 					SetSpeedX(-1.0 * GetSpeedZ() * 0.7);
 					SetSpeedZ(NO_SPEED);
 					AddPosX(GetSpeedX() * (static_cast<double>(a_Dt.count()) / 1000));
